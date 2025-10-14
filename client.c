@@ -23,6 +23,7 @@ void	send_bits(int pid, unsigned int data, int bit_count)
 			kill(pid, SIGUSR1);
 		else
 			kill(pid, SIGUSR2);
+		usleep(100); // Add delay between signals (100us)
 		i++;
 	}
 }
@@ -56,7 +57,7 @@ void	send_header(int pid, char *msg)
 void	send_msg(int pid, char *msg)
 {
 	size_t	i;
-	
+
 	i = 0;
 //	send_bits(pid, 2, 8);
 	while (msg[i])

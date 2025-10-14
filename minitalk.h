@@ -17,12 +17,6 @@
 # include <stdlib.h>
 # include <signal.h>
 
-typedef struct {
-	int	header_mode;
-	int	msg_mode;
-	int bit_counter;
-} t_mode;
-
 void	ft_putchar(char c);
 void	ft_putstr(char *str);
 void	ft_putnbr(int n);
