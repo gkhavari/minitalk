@@ -12,23 +12,22 @@
 
 #include "minitalk.h"
 
-void	send_bits(int pid, unsigned int data, int bit_count)
-{
-	int	i;
+int	g_ack = 0;
 
-	i = 0;
-	while (i < bit_count)
-	{
-		if ((data & (1 << (bit_count - 1 - i))) != 0)
-			kill(pid, SIGUSR1);
-		else
-			kill(pid, SIGUSR2);
-		usleep(100); // Add delay between signals (100us)
-		i++;
-	}
+static void	handle_ack(int sig)
+{
+	(void) sig;
+	g_ack = 1;
 }
 
-int	error_handler(int pid)
+void	wait_for_ack(void)
+{
+	while (!g_ack)
+		pause();
+	g_ack = 0;
+}
+
+static int	error_handler(int pid)
 {
 	if (pid == -1)
 	{
@@ -43,40 +42,21 @@ int	error_handler(int pid)
 	return (0);
 }
 
-void	send_header(int pid, char *msg)
-{
-	int	msg_len;
-
-	msg_len = 0;
-//	send_bits(pid, 1, 8);
-	while (msg[msg_len])
-		msg_len++;
-	send_bits(pid, msg_len, 32);
-}
-
-void	send_msg(int pid, char *msg)
-{
-	size_t	i;
-
-	i = 0;
-//	send_bits(pid, 2, 8);
-	while (msg[i])
-	{
-		send_bits(pid, msg[i], 8);
-		i++;
-	}
-	send_bits(pid, '\0', 8);
-}
-
 int	main(int argc, char **argv)
 {
-	int		server_pid;
+	int					server_pid;
+	struct sigaction	sa;
 
 	if (argc != 3)
 	{
 		ft_putstr("[ERROR] Please enter: ./client <PID> <message>\n");
 		return (1);
 	}
+	sa.sa_handler = handle_ack;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
 	server_pid = ft_atoi(argv[1]);
 	if (error_handler(server_pid))
 		return (1);
