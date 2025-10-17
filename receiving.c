@@ -24,7 +24,8 @@ static void	reset_signal_data(void)
 }
 
 static void	message_complete(pid_t sender_pid)
-{	ft_putstr(g_sig_data.msg);
+{
+	ft_putstr(g_sig_data.msg);
 	reset_signal_data();
 	kill(sender_pid, SIGUSR1);
 }
