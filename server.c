@@ -12,6 +12,26 @@
 
 #include "minitalk.h"
 
+static void	handle_signal(int sig, siginfo_t *info, void *context)
+{
+	pid_t	sender_pid;
+
+	sender_pid = info->si_pid;
+	(void)context;
+	if (g_sig_data.active_pid == 0)
+		g_sig_data.active_pid = sender_pid;
+	if (sender_pid != g_sig_data.active_pid)
+		return ;
+	if (sender_pid == g_sig_data.active_pid)
+	{
+		if (g_sig_data.bit_count < 32)
+			receive_length(sig);
+		else
+			receive_message(sig, sender_pid);
+		kill(sender_pid, SIGUSR2);
+	}
+}
+
 int	main(void)
 {
 	struct sigaction	sa;

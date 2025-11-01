@@ -12,6 +12,8 @@
 
 #ifndef MINITALK_H
 # define MINITALK_H
+# define TIMEOUT_STEPS 10000
+# define STEP_USEC 100
 
 # include <unistd.h>
 # include <stdlib.h>
@@ -23,15 +25,20 @@ typedef struct s_signal_data
 	int				bit_count;
 	unsigned char	c;
 	char			*msg;
+	pid_t			active_pid;
 }	t_signal_data;
+
+extern t_signal_data	g_sig_data;
+extern int				g_ack;
 
 void	ft_putchar(char c);
 void	ft_putstr(char *str);
 void	ft_putnbr(int n);
 int		ft_atoi(const char *str);
-void	send_header(int pid, char *msg);
-void	send_msg(int pid, char *msg);
-void	wait_for_ack(void);
-void	handle_signal(int sig, siginfo_t *info, void *context);
+void	receive_length(int sig);
+void	receive_message(int sig, pid_t sender_pid);
+void	handle_ack(int sig);
+int		send_header(int pid, char *msg);
+int		send_msg(int pid, char *msg);
 
 #endif

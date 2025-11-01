@@ -12,21 +12,6 @@
 
 #include "minitalk.h"
 
-int	g_ack = 0;
-
-static void	handle_ack(int sig)
-{
-	(void) sig;
-	g_ack = 1;
-}
-
-void	wait_for_ack(void)
-{
-	while (!g_ack)
-		pause();
-	g_ack = 0;
-}
-
 static int	error_handler(int pid)
 {
 	if (pid == -1)
@@ -42,9 +27,8 @@ static int	error_handler(int pid)
 	return (0);
 }
 
-int	main(int argc, char **argv)
+int	setup_client(int argc, char **argv, int *server_pid)
 {
-	int					server_pid;
 	struct sigaction	sa;
 
 	if (argc != 3)
@@ -52,15 +36,43 @@ int	main(int argc, char **argv)
 		ft_putstr("[ERROR] Please enter: ./client <PID> <message>\n");
 		return (1);
 	}
+	*server_pid = ft_atoi(argv[1]);
+	if (error_handler(*server_pid))
+		return (1);
 	sa.sa_handler = handle_ack;
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
-	server_pid = ft_atoi(argv[1]);
-	if (error_handler(server_pid))
+	return (0);
+}
+
+void	send_message_loop(int server_pid, char *message)
+{
+	while (g_ack == 0)
+	{
+		g_ack = 0;
+		ft_putstr("[INFO] Sending message...\n");
+		if (send_header(server_pid, message) == -1
+			|| send_msg(server_pid, message) == -1)
+		{
+			ft_putstr("[WARN] Timeout. Retrying...\n");
+			g_ack = 0;
+		}
+		else
+		{
+			ft_putstr("[SUCCESS] Message delivered successfully!\n");
+			break ;
+		}
+	}
+}
+
+int	main(int argc, char **argv)
+{
+	int	server_pid;
+
+	if (setup_client(argc, argv, &server_pid))
 		return (1);
-	send_header(server_pid, argv[2]);
-	send_msg(server_pid, argv[2]);
+	send_message_loop(server_pid, argv[2]);
 	return (0);
 }
